@@ -1,9 +1,40 @@
 <?php
+include 'db.php';
+session_start();
+
+// login validation
+$loginError = '';
+$loggedInUser = null;
+
+if (isset($_POST["login"])) {
+    $username = htmlspecialchars($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if ($username === '' || $password === '') {
+        $loginError = 'Username and password are required';
+        return;
+    }
+
+    $result = mysqli_query($conn, "SELECT username,hashedPassword FROM users WHERE username='$username'");
+    $user = $result->fetch_assoc();
+    mysqli_close($conn);
+
+    if (password_verify($password, $user['hashedPassword'])) {
+        $loggedInUser = $user;
+        $_SESSION['user'] = $username;
+    }
+
+    if (!$loggedInUser) {
+        $loginError = 'Invalid username or password';
+    }
+}
+
+// registration validation
 
 $errors = [];
-$successMessage = '';
+$success = false;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (isset($_POST["register"])) {
     $firstName = htmlspecialchars($_POST['first_name'] ?? '');
     $lastName = htmlspecialchars($_POST['last_name'] ?? '');
     $address = htmlspecialchars($_POST['address'] ?? '');
@@ -13,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = htmlspecialchars($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     $department = htmlspecialchars($_POST['department'] ?? '');
-    $captcha = htmlspecialchars($_POST['captcha'] ?? '');
 
     // input validation
     if ($firstName === '') $errors[] = "First name is required";
@@ -25,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username === '') $errors[] = "Username is required";
     if (strlen($password) < 6) $errors[] = "Password must be at least 6 characters long";
     if ($department === '') $errors[] = "Department is required";
-    if ($captcha !== 'polish') $errors[] = "Invalid captcha";
 
     // profile picture validation
     $imagePath = '';
@@ -56,34 +85,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-
     if (empty($errors)) {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        $skillsData = implode(",", $skills);
 
-        $formData = [
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'address' => $address,
-            'country' => $country,
-            'gender' => $gender,
-            'skills' => $skills,
-            'username' => $username,
-            'password' => $hashedPassword,
-            'department' => $department,
-            'profile_picture' => $imagePath
-        ];
-
-        $file = 'data.json';
-        $existingData = [];
-
-        if (file_exists($file)) {
-            $jsonContent = file_get_contents($file);
-            $existingData = json_decode($jsonContent, true) ?? [];
-        }
-
-        $existingData[] = $formData;
-        file_put_contents($file, json_encode($existingData, JSON_PRETTY_PRINT));
-
-        $successMessage = "Registration Successful. <a href='login.php'>login now</a>";
+        // add to db
+        $query = "INSERT INTO users (firstName, lastName, address, country, gender, skills, username, hashedPassword, department, profile_picture)
+        VALUES ('$firstName','$lastName','$address','$country','$gender','$skillsData','$username','$hashedPassword','$department','$newImageName')";
+        $result = mysqli_query($conn, $query);
+        if ($result) $success = true;
+        mysqli_close($conn);
     }
 }

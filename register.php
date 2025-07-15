@@ -1,19 +1,21 @@
-<?php include 'register_validation.php'; ?>
+<?php include './src/validation_handler.php'; ?>
+
 <!DOCTYPE html>
 <html>
 
 <head>
-    <link rel="stylesheet" href="./assets/style.css">
-    <title>Registration</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./styles/style.css">
+    <title>Register</title>
 </head>
 
 <body>
 
     <nav>
-        <a href="register.php">Register</a>
         <a href="login.php">Login</a>
+        <a href="register.php">Register</a>
         <a href="profile.php">Profile</a>
-        <a href="users.php">Users</a>
         <a href="logout.php">Logout</a>
     </nav>
 
@@ -31,11 +33,11 @@
             </div>
         <?php endif; ?>
 
-        <?php if ($successMessage): ?>
-            <p><?= $successMessage ?></p>
-        <?php endif; ?>
+        <?php if ($success):
+            header("Location: login.php");
+        endif; ?>
 
-        <form method="POST" action="register.php" enctype="multipart/form-data">
+        <form name="register" method="POST" action="register.php" enctype="multipart/form-data">
             <div class="form-item">
                 <label>First Name:</label>
                 <input type="text" name="first_name" required>
@@ -86,12 +88,7 @@
                 <input type="file" name="profile_image" accept="image/*" required>
             </div>
             <div class="form-item">
-                <label>Captcha:</label>
-                <img src="./assets/captcha.png" alt="captcha">
-                <input type="text" name="captcha" required>
-            </div>
-            <div class="form-item">
-                <button type="submit" name="submit">Submit</button>
+                <button type="submit" name="register">Submit</button>
                 <button type="reset">Reset</button>
             </div>
         </form>
